@@ -1,0 +1,15 @@
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\bin\Debug\net10.0\BankingApp.Data.deps.json
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\bin\Debug\net10.0\BankingApp.Data.runtimeconfig.json
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\bin\Debug\net10.0\BankingApp.Data.dll
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\bin\Debug\net10.0\BankingApp.Data.pdb
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.csproj.AssemblyReference.cache
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.AssemblyInfoInputs.cache
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.AssemblyInfo.cs
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.csproj.CoreCompileInputs.cache
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.sourcelink.json
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.dll
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\refint\BankingApp.Data.dll
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.pdb
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\BankingApp.Data.genruntimeconfig.cache
+C:\Users\Michael Gerges\Desktop\dotNet training\ProjectBankingApp\BankingApp.Data\obj\Debug\net10.0\ref\BankingApp.Data.dll

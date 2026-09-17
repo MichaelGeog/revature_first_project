@@ -1,3 +1,5 @@
 ﻿using BankingApp.Menus;
+using BankingApp.Utils;
 
-MenuHelper.ShowWelcomeMenu();
+using var dbContext = DbContextFactory.Create();
+MenuHelper.ShowWelcomeMenu(dbContext);
