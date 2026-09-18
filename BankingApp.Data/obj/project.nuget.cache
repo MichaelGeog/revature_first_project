@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "h54nY4gYtO8=",
+  "dgSpecHash": "+eskCiqkr0w=",
   "success": true,
   "projectFilePath": "C:\\Users\\Michael Gerges\\Desktop\\dotNet training\\ProjectBankingApp\\BankingApp.Data\\BankingApp.Data.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\azure.core\\1.50.0\\azure.core.1.50.0.nupkg.sha512",
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\azure.identity\\1.17.1\\azure.identity.1.17.1.nupkg.sha512",
+    "C:\\Users\\Michael Gerges\\.nuget\\packages\\bcrypt.net-next\\4.2.0\\bcrypt.net-next.4.2.0.nupkg.sha512",
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\8.0.0\\microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\microsoft.build.framework\\18.0.2\\microsoft.build.framework.18.0.2.nupkg.sha512",

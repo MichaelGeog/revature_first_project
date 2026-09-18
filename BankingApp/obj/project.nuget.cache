@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "B8vHCkmEcRU=",
+  "dgSpecHash": "CW3tQZvYAd8=",
   "success": true,
   "projectFilePath": "C:\\Users\\Michael Gerges\\Desktop\\dotNet training\\ProjectBankingApp\\BankingApp\\BankingApp.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\azure.core\\1.50.0\\azure.core.1.50.0.nupkg.sha512",
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\azure.identity\\1.17.1\\azure.identity.1.17.1.nupkg.sha512",
+    "C:\\Users\\Michael Gerges\\.nuget\\packages\\bcrypt.net-next\\4.2.0\\bcrypt.net-next.4.2.0.nupkg.sha512",
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\8.0.0\\microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\microsoft.data.sqlclient\\6.1.6\\microsoft.data.sqlclient.6.1.6.nupkg.sha512",
     "C:\\Users\\Michael Gerges\\.nuget\\packages\\microsoft.data.sqlclient.sni.runtime\\6.0.2\\microsoft.data.sqlclient.sni.runtime.6.0.2.nupkg.sha512",

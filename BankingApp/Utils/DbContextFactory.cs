@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using BankingApp.Data;
+using BankingApp.Data.Models;
 
 namespace BankingApp.Utils
 {
