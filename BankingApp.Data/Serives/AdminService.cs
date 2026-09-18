@@ -1,15 +1,11 @@
 using BankingApp.Data.Models;
-using System.Text.RegularExpressions;
 
 namespace BankingApp.Data.Services
 {
-    public enum CreateCustomerResult
+    public enum ExistingCustomerAccountStatus
     {
-        Success,
-        InvalidInput,
-        DuplicateUsername,
-        DuplicateEmail,
-        DuplicatePhoneNumber
+        HasActiveSaving,
+        NeedsSavingAccount
     }
     public class AdminService
     {
@@ -29,45 +25,6 @@ namespace BankingApp.Data.Services
                 return null;
 
             return BCrypt.Net.BCrypt.Verify(password, admin.Password);
-        }
-
-        public (CreateCustomerResult Result, Customer? Customer) CreateCustomer(string username, string password, string name, string phoneNumber, string email)
-        {
-            string digitsOnlyPhone = phoneNumber == null ? "" : Regex.Replace(phoneNumber, @"[^\d]", "");
-
-            if (string.IsNullOrWhiteSpace(username) ||
-                string.IsNullOrWhiteSpace(password) ||
-                string.IsNullOrWhiteSpace(name) ||
-                string.IsNullOrWhiteSpace(phoneNumber) ||
-                string.IsNullOrWhiteSpace(email) ||
-                !email.Contains('@') ||
-                digitsOnlyPhone.Length != 10)
-            {
-                return (CreateCustomerResult.InvalidInput, null);
-            }
-
-            if (_dbContext.Customers.Any(c => c.Username == username))
-                return (CreateCustomerResult.DuplicateUsername, null);
-
-            if (_dbContext.Customers.Any(c => c.Email == email))
-                return (CreateCustomerResult.DuplicateEmail, null);
-
-            if (_dbContext.Customers.Any(c => c.PhoneNumber == digitsOnlyPhone))
-                return (CreateCustomerResult.DuplicatePhoneNumber, null);
-
-            var newCustomer = new Customer
-            {
-                Username = username,
-                Password = BCrypt.Net.BCrypt.HashPassword(password),
-                Name = name,
-                PhoneNumber = digitsOnlyPhone,   // store cleaned digits, not raw input
-                Email = email
-            };
-
-            _dbContext.Customers.Add(newCustomer);
-            _dbContext.SaveChanges();
-
-            return (CreateCustomerResult.Success, newCustomer);
         }
 
         public CheckingAccount CreateCheckingAccount(Guid customerId, decimal initialBalance)
@@ -94,6 +51,87 @@ namespace BankingApp.Data.Services
             _dbContext.SaveChanges();
 
             return newAccount;
+        }
+
+        public SavingAccount CreateSavingAccount(Guid customerId, decimal initialBalance)
+        {
+            string accountNumber;
+
+            do
+            {
+                accountNumber = _random.Next(1_000_000_000, 2_000_000_000).ToString();
+            }
+            while (_dbContext.SavingAccounts.Any(a => a.AccountNumber == accountNumber));
+
+            var newAccount = new SavingAccount
+            {
+                AccountNumber = accountNumber,
+                RoutingNumber = BankRoutingNumber,
+                Balance = initialBalance,
+                DateOpen = DateTime.Now,
+                Status = "Active",
+                CustomerId = customerId
+            };
+
+            _dbContext.SavingAccounts.Add(newAccount);
+            _dbContext.SaveChanges();
+
+            return newAccount;
+        }
+
+        public ExistingCustomerAccountStatus CheckSavingAccountStatus(Guid customerId)
+        {
+            bool hasActiveSaving = _dbContext.SavingAccounts.Any(a => a.CustomerId == customerId && a.Status == "Active");
+            return hasActiveSaving ? ExistingCustomerAccountStatus.HasActiveSaving : ExistingCustomerAccountStatus.NeedsSavingAccount;
+        }
+
+        public void CreateNewCustomerFlow(CustomerService customerService, AdminService adminService, bool includeSaving)
+        {
+            Console.Write("Create a username: ");
+            string? newUsername = Console.ReadLine();
+
+            Console.Write("Create a password: ");
+            string? newPassword = Console.ReadLine();
+
+            Console.Write("Enter customer's full name: ");
+            string? newName = Console.ReadLine();
+
+            Console.Write("Enter customer's phone number: ");
+            string? newPhoneNumber = Console.ReadLine();
+
+            Console.Write("Enter customer's email: ");
+            string? newEmail = Console.ReadLine();
+
+            var (result, customer) = customerService.CreateCustomer(newUsername, newPassword, newName, newPhoneNumber, newEmail);
+
+            if (result != CreateCustomerResult.Success)
+            {
+                Console.WriteLine(result switch
+                {
+                    CreateCustomerResult.InvalidInput => "Invalid input. Please check all fields.",
+                    CreateCustomerResult.DuplicateUsername => "That username is already taken.",
+                    CreateCustomerResult.DuplicateEmail => "That email is already in use.",
+                    CreateCustomerResult.DuplicatePhoneNumber => "That phone number is already in use.",
+                    _ => "Unknown error."
+                });
+                return;
+            }
+
+            Console.Write("Enter initial balance for the checking account: ");
+            decimal.TryParse(Console.ReadLine(), out decimal checkingBalance);
+            var checkingAccount = adminService.CreateCheckingAccount(customer!.Id, checkingBalance);
+
+            Console.WriteLine($"Customer '{customer.Name}' created successfully.");
+            Console.WriteLine($"Checking account opened. Account #: {checkingAccount.AccountNumber}, Balance: {checkingAccount.Balance:C}");
+
+            if (includeSaving)
+            {
+                Console.Write("Enter initial balance for the saving account: ");
+                decimal.TryParse(Console.ReadLine(), out decimal savingBalance);
+                var savingAccount = adminService.CreateSavingAccount(customer.Id, savingBalance);
+
+                Console.WriteLine($"Saving account opened. Account #: {savingAccount.AccountNumber}, Balance: {savingAccount.Balance:C}");
+            }
         }
 
     }

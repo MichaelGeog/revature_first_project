@@ -2,5 +2,4 @@
 using BankingApp.Utils;
 
 using var dbContext = DbContextFactory.Create();
-
-MenuHelper.ShowWelcomeMenu(dbContext);
+WelcomeMenu.Show(dbContext);
