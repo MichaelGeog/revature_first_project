@@ -134,5 +134,35 @@ namespace BankingApp.Data.Services
             }
         }
 
+        public (bool HasActiveChecking, bool HasActiveSaving) GetActiveAccountsStatus(Guid customerId)
+        {
+            bool hasChecking = _dbContext.CheckingAccounts.Any(a => a.CustomerId == customerId && a.Status == "Active");
+            bool hasSaving = _dbContext.SavingAccounts.Any(a => a.CustomerId == customerId && a.Status == "Active");
+
+            return (hasChecking, hasSaving);
+        }
+
+        public void CloseCheckingAccount(Guid customerId)
+        {
+            var account = _dbContext.CheckingAccounts.FirstOrDefault(a => a.CustomerId == customerId && a.Status == "Active");
+
+            if (account != null)
+            {
+                account.Status = "Closed";
+                _dbContext.SaveChanges();
+            }
+        }
+
+        public void CloseSavingAccount(Guid customerId)
+        {
+            var account = _dbContext.SavingAccounts.FirstOrDefault(a => a.CustomerId == customerId && a.Status == "Active");
+
+            if (account != null)
+            {
+                account.Status = "Closed";
+                _dbContext.SaveChanges();
+            }
+        }
+
     }
 }

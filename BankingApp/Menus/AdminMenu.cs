@@ -157,8 +157,185 @@ namespace BankingApp.Menus
                         }
                         break;
                     case 2:
+                        int deleteCredentialAttempts = 0;
+                        Customer? customerToDelete = null;
+
+                        while (deleteCredentialAttempts < 3)
+                        {
+                            Console.Write("Enter customer's username: ");
+                            string? deleteUsername = Console.ReadLine();
+
+                            Console.Write("Enter customer's password: ");
+                            string? deletePassword = Console.ReadLine();
+
+                            var (found, passwordValid, customer) = customerService.VerifyCredentials(deleteUsername!, deletePassword!);
+
+                            if (!found)
+                            {
+                                Console.WriteLine("No customer found with that username.");
+                            }
+                            else if (!passwordValid)
+                            {
+                                Console.WriteLine("Incorrect password.");
+                            }
+                            else
+                            {
+                                customerToDelete = customer;
+                                break;
+                            }
+
+                            deleteCredentialAttempts++;
+                        }
+
+                        if (customerToDelete == null)
+                        {
+                            Console.WriteLine("Too many failed attempts. Returning to admin menu.");
+                            break;
+                        }
+
+                        var (hasChecking, hasSaving) = adminService.GetActiveAccountsStatus(customerToDelete.Id);
+
+                        if (!hasChecking && !hasSaving)
+                        {
+                            Console.WriteLine("This customer has no active accounts to delete.");
+                            break;
+                        }
+
+                        Console.WriteLine("Which account(s) would you like to close?");
+
+                        var validOptions = new List<int>();
+
+                        if (hasSaving)
+                        {
+                            Console.WriteLine("1. Saving Account");
+                            Console.WriteLine("2. Both Checking and Saving");
+                            validOptions.Add(1);
+                            validOptions.Add(2);
+                        }
+                        else
+                        {
+                            Console.WriteLine("1. Checking Account");
+                            validOptions.Add(1);
+                        }
+
+                        Console.Write("Write a number to choose one of the options: ");
+
+                        var (validDeleteSelection, deleteSelection) = InputHelper.GetMenuSelection(validOptions.ToArray());
+
+                        if (!validDeleteSelection)
+                        {
+                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            break;
+                        }
+
+                        if (hasChecking && hasSaving)
+                        {
+                            if (deleteSelection == 1)
+                            {
+                                adminService.CloseSavingAccount(customerToDelete.Id);
+                                Console.WriteLine("Saving account closed.");
+                            }
+                            else
+                            {
+                                adminService.CloseCheckingAccount(customerToDelete.Id);
+                                adminService.CloseSavingAccount(customerToDelete.Id);
+                                Console.WriteLine("Checking and saving accounts closed.");
+                            }
+                        }
+                        else if (hasChecking)
+                        {
+                            adminService.CloseCheckingAccount(customerToDelete.Id);
+                            Console.WriteLine("Checking account closed.");
+                        }
+                        else
+                        {
+                            adminService.CloseSavingAccount(customerToDelete.Id);
+                            Console.WriteLine("Saving account closed.");
+                        }
+
                         break;
                     case 3:
+                        int editCredentialAttempts = 0;
+                        Customer? customerToEdit = null;
+
+                        while (editCredentialAttempts < 3)
+                        {
+                            Console.Write("Enter customer's username: ");
+                            string? editUsername = Console.ReadLine();
+
+                            Console.Write("Enter customer's password: ");
+                            string? editPassword = Console.ReadLine();
+
+                            var (found, passwordValid, customer) = customerService.VerifyCredentials(editUsername!, editPassword!);
+
+                            if (!found)
+                            {
+                                Console.WriteLine("No customer found with that username.");
+                            }
+                            else if (!passwordValid)
+                            {
+                                Console.WriteLine("Incorrect password.");
+                            }
+                            else
+                            {
+                                customerToEdit = customer;
+                                break;
+                            }
+
+                            editCredentialAttempts++;
+                        }
+
+                        if (customerToEdit == null)
+                        {
+                            Console.WriteLine("Too many failed attempts. Returning to admin menu.");
+                            break;
+                        }
+
+                        Console.WriteLine("What would you like to update?");
+                        Console.WriteLine("1. Name");
+                        Console.WriteLine("2. Phone Number");
+                        Console.WriteLine("3. Email");
+                        Console.Write("Write a number to choose one of the options: ");
+
+                        var (validFieldSelection, fieldSelection) = InputHelper.GetMenuSelection(new[] { 1, 2, 3 });
+
+                        if (!validFieldSelection)
+                        {
+                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            break;
+                        }
+
+                        UpdateCustomerResult editResult;
+
+                        if (fieldSelection == 1)
+                        {
+                            Console.Write("Enter updated name: ");
+                            string? updatedName = Console.ReadLine();
+                            editResult = customerService.UpdateCustomerName(customerToEdit.Id, updatedName!);
+                        }
+                        else if (fieldSelection == 2)
+                        {
+                            Console.Write("Enter updated phone number: ");
+                            string? updatedPhone = Console.ReadLine();
+                            editResult = customerService.UpdateCustomerPhone(customerToEdit.Id, updatedPhone!);
+                        }
+                        else
+                        {
+                            Console.Write("Enter updated email: ");
+                            string? updatedEmail = Console.ReadLine();
+                            editResult = customerService.UpdateCustomerEmail(customerToEdit.Id, updatedEmail!);
+                        }
+
+                        Console.WriteLine(editResult switch
+                        {
+                            UpdateCustomerResult.Success => "Customer info updated successfully.",
+                            UpdateCustomerResult.InvalidInput => "Invalid input. Please check the value entered.",
+                            UpdateCustomerResult.DuplicateEmail => "That email is already in use.",
+                            UpdateCustomerResult.DuplicatePhoneNumber => "That phone number is already in use.",
+                            UpdateCustomerResult.CustomerNotFound => "Customer not found.",
+                            _ => "Unknown error."
+                        });
+
                         break;
                     case 4:
                         break;

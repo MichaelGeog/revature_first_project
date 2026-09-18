@@ -12,6 +12,15 @@ namespace BankingApp.Data.Services
         DuplicatePhoneNumber
     }
 
+    public enum UpdateCustomerResult
+    {
+        Success,
+        InvalidInput,
+        DuplicateEmail,
+        DuplicatePhoneNumber,
+        CustomerNotFound
+    }
+
     public class CustomerService
     {
         private readonly ProjectBankingAppContext _dbContext;
@@ -42,6 +51,7 @@ namespace BankingApp.Data.Services
 
             return (true, passwordValid, passwordValid ? customer : null);
         }
+        
         public (CreateCustomerResult Result, Customer? Customer) CreateCustomer(string username, string password, string name, string phoneNumber, string email)
         {
             string digitsOnlyPhone = phoneNumber == null ? "" : Regex.Replace(phoneNumber, @"[^\d]", "");
@@ -80,5 +90,63 @@ namespace BankingApp.Data.Services
 
             return (CreateCustomerResult.Success, newCustomer);
         }
+
+        public UpdateCustomerResult UpdateCustomerName(Guid customerId, string name)
+        {
+            var customer = _dbContext.Customers.FirstOrDefault(c => c.Id == customerId);
+
+            if (customer == null)
+                return UpdateCustomerResult.CustomerNotFound;
+
+            if (string.IsNullOrWhiteSpace(name))
+                return UpdateCustomerResult.InvalidInput;
+
+            customer.Name = name;
+            _dbContext.SaveChanges();
+
+            return UpdateCustomerResult.Success;
+        }
+
+        public UpdateCustomerResult UpdateCustomerPhone(Guid customerId, string phoneNumber)
+        {
+            var customer = _dbContext.Customers.FirstOrDefault(c => c.Id == customerId);
+
+            if (customer == null)
+                return UpdateCustomerResult.CustomerNotFound;
+
+            string digitsOnlyPhone = phoneNumber == null ? "" : Regex.Replace(phoneNumber, @"[^\d]", "");
+
+            if (digitsOnlyPhone.Length != 10)
+                return UpdateCustomerResult.InvalidInput;
+
+            if (_dbContext.Customers.Any(c => c.PhoneNumber == digitsOnlyPhone && c.Id != customerId))
+                return UpdateCustomerResult.DuplicatePhoneNumber;
+
+            customer.PhoneNumber = digitsOnlyPhone;
+            _dbContext.SaveChanges();
+
+            return UpdateCustomerResult.Success;
+        }
+
+        public UpdateCustomerResult UpdateCustomerEmail(Guid customerId, string email)
+        {
+            var customer = _dbContext.Customers.FirstOrDefault(c => c.Id == customerId);
+
+            if (customer == null)
+                return UpdateCustomerResult.CustomerNotFound;
+
+            if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+                return UpdateCustomerResult.InvalidInput;
+
+            if (_dbContext.Customers.Any(c => c.Email == email && c.Id != customerId))
+                return UpdateCustomerResult.DuplicateEmail;
+
+            customer.Email = email;
+            _dbContext.SaveChanges();
+
+            return UpdateCustomerResult.Success;
+        }
+
+
     }
 }
