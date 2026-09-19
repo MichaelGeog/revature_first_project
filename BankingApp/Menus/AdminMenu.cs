@@ -1,6 +1,7 @@
 using BankingApp.Utils;
 using BankingApp.Data.Services;
 using BankingApp.Data.Models;
+using System.Diagnostics;
 
 namespace BankingApp.Menus
 {
@@ -305,41 +306,116 @@ namespace BankingApp.Menus
                             break;
                         }
 
-                        UpdateCustomerResult editResult;
+                        UpdateCustomerResult editResult = UpdateCustomerResult.InvalidInput;
+                        int editAttempts = 0;
 
-                        if (fieldSelection == 1)
+                        while (editAttempts < 3)
                         {
-                            Console.Write("Enter updated name: ");
-                            string? updatedName = Console.ReadLine();
-                            editResult = customerService.UpdateCustomerName(customerToEdit.Id, updatedName!);
+                            if (fieldSelection == 1)
+                            {
+                                Console.Write("Enter updated name: ");
+                                string? updatedName = Console.ReadLine();
+                                editResult = customerService.UpdateCustomerName(customerToEdit.Id, updatedName!);
+                            }
+                            else if (fieldSelection == 2)
+                            {
+                                Console.Write("Enter updated phone number: ");
+                                string? updatedPhone = Console.ReadLine();
+                                editResult = customerService.UpdateCustomerPhone(customerToEdit.Id, updatedPhone!);
+                            }
+                            else
+                            {
+                                Console.Write("Enter updated email: ");
+                                string? updatedEmail = Console.ReadLine();
+                                editResult = customerService.UpdateCustomerEmail(customerToEdit.Id, updatedEmail!);
+                            }
+
+                            if (editResult == UpdateCustomerResult.Success)
+                                break;
+
+                            Console.WriteLine(editResult switch
+                            {
+                                UpdateCustomerResult.InvalidInput => "Invalid input. Please try again.",
+                                UpdateCustomerResult.DuplicateEmail => "That email is already in use. Please try again.",
+                                UpdateCustomerResult.DuplicatePhoneNumber => "That phone number is already in use. Please try again.",
+                                UpdateCustomerResult.CustomerNotFound => "Customer not found.",
+                                _ => "Unknown error."
+                            });
+
+                            editAttempts++;
                         }
-                        else if (fieldSelection == 2)
+
+                        if (editResult == UpdateCustomerResult.Success)
                         {
-                            Console.Write("Enter updated phone number: ");
-                            string? updatedPhone = Console.ReadLine();
-                            editResult = customerService.UpdateCustomerPhone(customerToEdit.Id, updatedPhone!);
+                            Console.WriteLine("Customer info updated successfully.");
                         }
                         else
                         {
-                            Console.Write("Enter updated email: ");
-                            string? updatedEmail = Console.ReadLine();
-                            editResult = customerService.UpdateCustomerEmail(customerToEdit.Id, updatedEmail!);
+                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
                         }
-
-                        Console.WriteLine(editResult switch
-                        {
-                            UpdateCustomerResult.Success => "Customer info updated successfully.",
-                            UpdateCustomerResult.InvalidInput => "Invalid input. Please check the value entered.",
-                            UpdateCustomerResult.DuplicateEmail => "That email is already in use.",
-                            UpdateCustomerResult.DuplicatePhoneNumber => "That phone number is already in use.",
-                            UpdateCustomerResult.CustomerNotFound => "Customer not found.",
-                            _ => "Unknown error."
-                        });
 
                         break;
                     case 4:
+                        adminService.DisplaySummary();
                         break;
                     case 5:
+                        int passResetAttempts = 0;
+                        Customer? custToUpdatePass = null;
+
+                        while (passResetAttempts < 3)
+                        {
+                            Console.Write("Enter customer's username: ");
+                            string? getCustUsername = Console.ReadLine();
+
+                            var (verified, foundCustomer) = customerService.VerifyUsername(getCustUsername!);
+
+                            if (verified)
+                            {
+                                Console.WriteLine("Customer Found!");
+                                custToUpdatePass = foundCustomer;
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("No Customer Found");
+                            }
+
+                            passResetAttempts++;
+                        }
+
+                        if (custToUpdatePass == null)
+                        {
+                            Console.WriteLine("Too many failed attempts. Returning to admin menu.");
+                            break;
+                        }
+
+                        int newPasswordAttempts = 0;
+                        string? updatedCustPass = null;
+
+                        while (newPasswordAttempts < 3)
+                        {
+                            Console.Write("Enter customer's updated password: ");
+                            string? enteredPassword = Console.ReadLine();
+
+                            if (string.IsNullOrWhiteSpace(enteredPassword))
+                            {
+                                Console.WriteLine("Password cannot be empty. Please try again.");
+                                newPasswordAttempts++;
+                                continue;
+                            }
+
+                            updatedCustPass = enteredPassword;
+                            break;
+                        }
+
+                        if (updatedCustPass == null)
+                        {
+                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            break;
+                        }
+
+                        customerService.ChangeCustomerPass(custToUpdatePass, updatedCustPass);
+                        Console.WriteLine("Customer's password updated successfully");
                         break;
                     case 6:
                         break;

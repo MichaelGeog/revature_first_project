@@ -21,6 +21,21 @@ namespace BankingApp.Data.Services
         CustomerNotFound
     }
 
+    public enum WithdrawResult
+    {
+        Success,
+        NoActiveAccount,
+        InsufficientFunds,
+        InvalidAmount
+    }
+
+    public enum TransactionType
+    {
+        Withdraw,
+        Deposit,
+        Transfer
+    }
+
     public class CustomerService
     {
         private readonly ProjectBankingAppContext _dbContext;
@@ -52,6 +67,22 @@ namespace BankingApp.Data.Services
             return (true, passwordValid, passwordValid ? customer : null);
         }
         
+        public (bool Verified, Customer? Customer) VerifyUsername(string username)
+        {
+            var customer = _dbContext.Customers.FirstOrDefault(c => c.Username == username);
+
+            if (customer == null)
+                return (false, null);
+
+            return (true, customer);
+        }
+
+        public void ChangeCustomerPass(Customer Customer, string password)
+        {
+            Customer.Password = BCrypt.Net.BCrypt.HashPassword(password);
+            _dbContext.SaveChanges();
+        }
+
         public (CreateCustomerResult Result, Customer? Customer) CreateCustomer(string username, string password, string name, string phoneNumber, string email)
         {
             string digitsOnlyPhone = phoneNumber == null ? "" : Regex.Replace(phoneNumber, @"[^\d]", "");
@@ -147,6 +178,50 @@ namespace BankingApp.Data.Services
             return UpdateCustomerResult.Success;
         }
 
+        public CheckingAccount? GetActiveCheckingAccount(Guid customerId)
+        {
+            return _dbContext.CheckingAccounts.FirstOrDefault(a => a.CustomerId == customerId && a.Status == "Active");
+        }
 
+        public SavingAccount? GetActiveSavingAccount(Guid customerId)
+        {
+            return _dbContext.SavingAccounts.FirstOrDefault(a => a.CustomerId == customerId && a.Status == "Active");
+        }
+
+        public (bool HasActiveChecking, bool HasActiveSaving) GetActiveAccountsStatus(Guid customerId)
+        {
+            bool hasChecking = _dbContext.CheckingAccounts.Any(a => a.CustomerId == customerId && a.Status == "Active");
+            bool hasSaving = _dbContext.SavingAccounts.Any(a => a.CustomerId == customerId && a.Status == "Active");
+
+            return (hasChecking, hasSaving);
+        }
+
+        public (WithdrawResult Result, decimal NewBalance) Withdraw(Guid customerId, decimal withdrawAmount)
+        {
+            if (withdrawAmount <= 0)
+                return (WithdrawResult.InvalidAmount, 0);
+
+            var checkingAccount = GetActiveCheckingAccount(customerId);
+
+            if (checkingAccount == null)
+                return (WithdrawResult.NoActiveAccount, 0);
+
+            if (checkingAccount.Balance < withdrawAmount)
+                return (WithdrawResult.InsufficientFunds, checkingAccount.Balance);
+
+            checkingAccount.Balance -= withdrawAmount;
+            var newTransaction = new Transaction
+            {
+                TransactionType = TransactionType.Withdraw.ToString(),
+                Amount = withdrawAmount,
+                TransactionDate = DateTime.Now,
+                CheckingAccountId = checkingAccount.Id,
+                CustomerId = customerId
+            };
+            _dbContext.Transactions.Add(newTransaction);
+            _dbContext.SaveChanges();
+
+            return (WithdrawResult.Success, checkingAccount.Balance);
+        }
     }
 }

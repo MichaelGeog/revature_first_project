@@ -164,5 +164,32 @@ namespace BankingApp.Data.Services
             }
         }
 
+        public void DisplaySummary()
+        {
+            int adminCount = _dbContext.Admins.Count();
+            int customerCount = _dbContext.Customers.Count();
+
+            int activeChecking = _dbContext.CheckingAccounts.Count(a => a.Status == "Active");
+            int inactiveChecking = _dbContext.CheckingAccounts.Count(a => a.Status == "Inactive");
+            int closedChecking = _dbContext.CheckingAccounts.Count(a => a.Status == "Closed");
+
+            int activeSaving = _dbContext.SavingAccounts.Count(a => a.Status == "Active");
+            int inactiveSaving = _dbContext.SavingAccounts.Count(a => a.Status == "Inactive");
+            int closedSaving = _dbContext.SavingAccounts.Count(a => a.Status == "Closed");
+
+            Console.WriteLine("\n===== Bank Summary =====");
+            Console.WriteLine($"Total Admins: {adminCount}");
+            Console.WriteLine($"Total Customers: {customerCount}");
+            Console.WriteLine($"Active Checking Accounts: {activeChecking}");
+            Console.WriteLine($"Inactive Checking Accounts: {inactiveChecking}");
+            Console.WriteLine($"Closed Checking Accounts: {closedChecking}");
+            Console.WriteLine($"Active Saving Accounts: {activeSaving}");
+            Console.WriteLine($"Inactive Saving Accounts: {inactiveSaving}");
+            Console.WriteLine($"Closed Saving Accounts: {closedSaving}");
+            Console.WriteLine("=========================");
+        }
+
+
+
     }
 }

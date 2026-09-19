@@ -28,7 +28,7 @@ namespace BankingApp.Menus
                 switch (userSelection)
                 {
                     case 1:
-                        CustomerMenu.Show();
+                        CustomerMenu.Show(dbContext);
                         break;
                     case 2:
                         AdminMenu.Show(dbContext);

@@ -185,7 +185,7 @@ public partial class ProjectBankingAppContext : DbContext
                 .HasColumnName("date_open");
             entity.Property(e => e.InterestRate)
                 .HasDefaultValue(0.0001m, "DF_SavingAccounts_InterestRate")
-                .HasColumnType("decimal(5, 2)")
+                .HasColumnType("decimal(5, 4)")
                 .HasColumnName("interest_rate");
             entity.Property(e => e.RoutingNumber)
                 .HasMaxLength(20)
