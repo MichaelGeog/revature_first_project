@@ -1,4 +1,5 @@
 using BankingApp.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Data.Services
 {
@@ -17,14 +18,16 @@ namespace BankingApp.Data.Services
             _dbContext = dbContext;
         }
 
-        public bool? Login(string username, string password)
+        public (bool Found, bool PasswordValid, Admin? Admin) VerifyCredentials(string username, string password)
         {
             var admin = _dbContext.Admins.FirstOrDefault(a => a.Username == username);
 
             if (admin == null)
-                return null;
+                return (false, false, null);
 
-            return BCrypt.Net.BCrypt.Verify(password, admin.Password);
+            bool passwordValid = BCrypt.Net.BCrypt.Verify(password, admin.Password);
+
+            return (true, passwordValid, passwordValid ? admin : null);
         }
 
         public CheckingAccount CreateCheckingAccount(Guid customerId, decimal initialBalance)
@@ -85,55 +88,6 @@ namespace BankingApp.Data.Services
             return hasActiveSaving ? ExistingCustomerAccountStatus.HasActiveSaving : ExistingCustomerAccountStatus.NeedsSavingAccount;
         }
 
-        public void CreateNewCustomerFlow(CustomerService customerService, AdminService adminService, bool includeSaving)
-        {
-            Console.Write("Create a username: ");
-            string? newUsername = Console.ReadLine();
-
-            Console.Write("Create a password: ");
-            string? newPassword = Console.ReadLine();
-
-            Console.Write("Enter customer's full name: ");
-            string? newName = Console.ReadLine();
-
-            Console.Write("Enter customer's phone number: ");
-            string? newPhoneNumber = Console.ReadLine();
-
-            Console.Write("Enter customer's email: ");
-            string? newEmail = Console.ReadLine();
-
-            var (result, customer) = customerService.CreateCustomer(newUsername, newPassword, newName, newPhoneNumber, newEmail);
-
-            if (result != CreateCustomerResult.Success)
-            {
-                Console.WriteLine(result switch
-                {
-                    CreateCustomerResult.InvalidInput => "Invalid input. Please check all fields.",
-                    CreateCustomerResult.DuplicateUsername => "That username is already taken.",
-                    CreateCustomerResult.DuplicateEmail => "That email is already in use.",
-                    CreateCustomerResult.DuplicatePhoneNumber => "That phone number is already in use.",
-                    _ => "Unknown error."
-                });
-                return;
-            }
-
-            Console.Write("Enter initial balance for the checking account: ");
-            decimal.TryParse(Console.ReadLine(), out decimal checkingBalance);
-            var checkingAccount = adminService.CreateCheckingAccount(customer!.Id, checkingBalance);
-
-            Console.WriteLine($"Customer '{customer.Name}' created successfully.");
-            Console.WriteLine($"Checking account opened. Account #: {checkingAccount.AccountNumber}, Balance: {checkingAccount.Balance:C}");
-
-            if (includeSaving)
-            {
-                Console.Write("Enter initial balance for the saving account: ");
-                decimal.TryParse(Console.ReadLine(), out decimal savingBalance);
-                var savingAccount = adminService.CreateSavingAccount(customer.Id, savingBalance);
-
-                Console.WriteLine($"Saving account opened. Account #: {savingAccount.AccountNumber}, Balance: {savingAccount.Balance:C}");
-            }
-        }
-
         public (bool HasActiveChecking, bool HasActiveSaving) GetActiveAccountsStatus(Guid customerId)
         {
             bool hasChecking = _dbContext.CheckingAccounts.Any(a => a.CustomerId == customerId && a.Status == "Active");
@@ -189,7 +143,39 @@ namespace BankingApp.Data.Services
             Console.WriteLine("=========================");
         }
 
+        public List<ChequeBookRequest> GetPendingChequeBookRequests()
+        {
+            return _dbContext.ChequeBookRequests
+                .Include(r => r.Customer)
+                .Include(r => r.CheckingAccount)
+                .Where(r => r.Status == "Pending")
+                .OrderBy(r => r.RequestDate)
+                .ToList();
+        }
 
+        public void ApproveChequeBookRequest(Guid requestId, Guid adminId)
+        {
+            var request = _dbContext.ChequeBookRequests.FirstOrDefault(r => r.Id == requestId);
+
+            if (request != null)
+            {
+                request.Status = "Approved";
+                request.AdminId = adminId;
+                _dbContext.SaveChanges();
+            }
+        }
+
+        public void DenyChequeBookRequest(Guid requestId, Guid adminId)
+        {
+            var request = _dbContext.ChequeBookRequests.FirstOrDefault(r => r.Id == requestId);
+
+            if (request != null)
+            {
+                request.Status = "Rejected";
+                request.AdminId = adminId;
+                _dbContext.SaveChanges();
+            }
+        }
 
     }
 }

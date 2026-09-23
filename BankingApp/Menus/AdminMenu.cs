@@ -7,13 +7,74 @@ namespace BankingApp.Menus
 {
     public static class AdminMenu
     {
+        private static void CreateNewCustomerFlow(CustomerService customerService, AdminService adminService, bool includeSaving)
+        {
+            Console.Write("Create a username: ");
+            string? newUsername = Console.ReadLine();
+
+            Console.Write("Create a password: ");
+            string? newPassword = Console.ReadLine();
+
+            Console.Write("Enter customer's full name: ");
+            string? newName = Console.ReadLine();
+
+            Console.Write("Enter customer's phone number: ");
+            string? newPhoneNumber = Console.ReadLine();
+
+            Console.Write("Enter customer's email: ");
+            string? newEmail = Console.ReadLine();
+
+            var (result, customer) = customerService.CreateCustomer(newUsername, newPassword, newName, newPhoneNumber, newEmail);
+
+            if (result != CreateCustomerResult.Success)
+            {
+                Console.WriteLine(result switch
+                {
+                    CreateCustomerResult.InvalidInput => "Invalid input. Please check all fields.",
+                    CreateCustomerResult.DuplicateUsername => "That username is already taken.",
+                    CreateCustomerResult.DuplicateEmail => "That email is already in use.",
+                    CreateCustomerResult.DuplicatePhoneNumber => "That phone number is already in use.",
+                    _ => "Unknown error."
+                });
+                return;
+            }
+
+            var (validCheckingBalance, checkingBalance) = InputHelper.GetPositiveDecimal("Enter initial balance for the checking account: ");
+
+            if (!validCheckingBalance)
+            {
+                Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                return;
+            }
+
+            var checkingAccount = adminService.CreateCheckingAccount(customer!.Id, checkingBalance);
+
+            Console.WriteLine($"Customer '{customer.Name}' created successfully.");
+            Console.WriteLine($"Checking account opened. Account #: {checkingAccount.AccountNumber}, Balance: {checkingAccount.Balance:C}");
+
+            if (includeSaving)
+            {
+                var (validSavingBalance, savingBalance) = InputHelper.GetPositiveDecimal("Enter initial balance for the saving account: ");
+
+                if (!validSavingBalance)
+                {
+                    Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                    return;
+                }
+
+                var savingAccount = adminService.CreateSavingAccount(customer.Id, savingBalance);
+
+                Console.WriteLine($"Saving account opened. Account #: {savingAccount.AccountNumber}, Balance: {savingAccount.Balance:C}");
+            }
+        }
+
         public static void Show(ProjectBankingAppContext dbContext)
         {
             var adminService = new AdminService(dbContext);
             var customerService = new CustomerService(dbContext);
 
             int attempts = 0;
-            bool loginSuccessful = false;
+            Admin? loggedInAdmin = null;
 
             while (attempts < 3)
             {
@@ -22,29 +83,29 @@ namespace BankingApp.Menus
                 Console.Write("Enter Your Password: \n");
                 string? adminPassword = Console.ReadLine();
 
-                bool? loginResult = adminService.Login(adminUsername, adminPassword);
+                var (found, passwordValid, admin) = adminService.VerifyCredentials(adminUsername!, adminPassword!);
 
-                if (loginResult == true)
+                if (!found)
                 {
-                    Console.WriteLine("\nCredentials Verified: Welcome");
-                    loginSuccessful = true;
-                    break;
+                    Console.WriteLine("\n**** Admin not found! ****");
                 }
-                else if (loginResult == false)
+                else if (!passwordValid)
                 {
-                    Console.WriteLine("\nInvalid Credentials: Please try again.");
+                    Console.WriteLine("\n**** Invalid Credentials: Please try again. ****");
                 }
                 else
                 {
-                    Console.WriteLine("\nAdmin not found!");
+                    Console.WriteLine("\nCredentials Verified");
+                    loggedInAdmin = admin;
+                    break;
                 }
 
                 attempts++;
             }
 
-            if (!loginSuccessful)
+            if (loggedInAdmin == null)
             {
-                Console.WriteLine("Too many failed attempts. Returning to main menu.");
+                Console.WriteLine("\n**** Too many failed attempts. Returning to main menu. ****");
                 return;
             }
 
@@ -52,7 +113,7 @@ namespace BankingApp.Menus
             while (!exit3)
             {
                 Console.WriteLine("\n------------------------------------------");
-                Console.WriteLine("Welcome admin!, How can we help you today?");
+                Console.WriteLine($"Welcome {loggedInAdmin.Name}!, How can we help you today?");
                 Console.WriteLine("------------------------------------------");
                 Console.WriteLine("1. Create New Account");
                 Console.WriteLine("2. Delete Account");
@@ -72,7 +133,7 @@ namespace BankingApp.Menus
                 switch (userSelection3)
                 {
                     case 1:
-                        Console.WriteLine("1. New Customer");
+                        Console.WriteLine("\n1. New Customer");
                         Console.WriteLine("2. Existing Customer");
                         Console.Write("Write a number to choose one of the options: ");
 
@@ -80,13 +141,13 @@ namespace BankingApp.Menus
 
                         if (!validCustomerType)
                         {
-                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            Console.WriteLine("\n**** Too many invalid attempts. Returning to admin menu. ****");
                             break;
                         }
 
                         if (customerTypeSelection == 1)
                         {
-                            Console.WriteLine("1. Checking Account Only");
+                            Console.WriteLine("\n1. Checking Account Only");
                             Console.WriteLine("2. Checking + Saving Account");
                             Console.Write("Write a number to choose one of the options: ");
 
@@ -94,11 +155,11 @@ namespace BankingApp.Menus
 
                             if (!validAccountType)
                             {
-                                Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                                Console.WriteLine("\n**** Too many invalid attempts. Returning to admin menu. ****");
                                 break;
                             }
 
-                            adminService.CreateNewCustomerFlow(customerService, adminService, includeSaving: accountTypeSelection == 2);
+                            CreateNewCustomerFlow(customerService, adminService, includeSaving: accountTypeSelection == 2);
                         }
                         else
                         {
@@ -107,7 +168,7 @@ namespace BankingApp.Menus
 
                             while (credentialAttempts < 3)
                             {
-                                Console.Write("Enter customer's username: ");
+                                Console.Write("\nEnter customer's username: ");
                                 string? existingUsername = Console.ReadLine();
 
                                 Console.Write("Enter customer's password: ");
@@ -117,11 +178,11 @@ namespace BankingApp.Menus
 
                                 if (!found)
                                 {
-                                    Console.WriteLine("No customer found with that username.");
+                                    Console.WriteLine("\n**** No customer found with that username. ****");
                                 }
                                 else if (!passwordValid)
                                 {
-                                    Console.WriteLine("Incorrect password.");
+                                    Console.WriteLine("\n**** Incorrect password. ****");
                                 }
                                 else
                                 {
@@ -134,7 +195,7 @@ namespace BankingApp.Menus
 
                             if (foundCustomer == null)
                             {
-                                Console.WriteLine("Too many failed attempts. Returning to admin menu.");
+                                Console.WriteLine("\n**** Too many failed attempts. Returning to admin menu. ****");
                                 break;
                             }
 
@@ -142,18 +203,23 @@ namespace BankingApp.Menus
 
                             if (savingStatus == ExistingCustomerAccountStatus.HasActiveSaving)
                             {
-                                Console.WriteLine("This customer already has an active checking and saving account. Cannot create a new account.");
+                                Console.WriteLine("\n**** This customer already has an active checking and saving account. Cannot create a new account. ****");
                             }
                             else
                             {
-                                Console.WriteLine($"Creating a saving account for {foundCustomer.Name}.");
+                                Console.WriteLine($"\nCreating a saving account for {foundCustomer.Name}.");
 
-                                Console.Write("Enter initial balance for the saving account: ");
-                                decimal.TryParse(Console.ReadLine(), out decimal savingBalance);
+                                var (validSavingBalance, savingBalance) = InputHelper.GetPositiveDecimal("Enter initial balance for the saving account: ");
+
+                                if (!validSavingBalance)
+                                {
+                                    Console.WriteLine("\n**** Too many invalid attempts. Returning to admin menu. ****");
+                                    break;
+                                }
 
                                 var savingAccount = adminService.CreateSavingAccount(foundCustomer.Id, savingBalance);
 
-                                Console.WriteLine($"Saving account opened. Account #: {savingAccount.AccountNumber}, Balance: {savingAccount.Balance:C}");
+                                Console.WriteLine($"\nSaving account opened. Account #: {savingAccount.AccountNumber}, Balance: {savingAccount.Balance:C}");
                             }
                         }
                         break;
@@ -163,7 +229,7 @@ namespace BankingApp.Menus
 
                         while (deleteCredentialAttempts < 3)
                         {
-                            Console.Write("Enter customer's username: ");
+                            Console.Write("\nEnter customer's username: ");
                             string? deleteUsername = Console.ReadLine();
 
                             Console.Write("Enter customer's password: ");
@@ -173,11 +239,11 @@ namespace BankingApp.Menus
 
                             if (!found)
                             {
-                                Console.WriteLine("No customer found with that username.");
+                                Console.WriteLine("\n**** No customer found with that username. ****");
                             }
                             else if (!passwordValid)
                             {
-                                Console.WriteLine("Incorrect password.");
+                                Console.WriteLine("\n**** Incorrect password. ****");
                             }
                             else
                             {
@@ -190,7 +256,7 @@ namespace BankingApp.Menus
 
                         if (customerToDelete == null)
                         {
-                            Console.WriteLine("Too many failed attempts. Returning to admin menu.");
+                            Console.WriteLine("\n**** Too many failed attempts. Returning to admin menu. ****");
                             break;
                         }
 
@@ -198,11 +264,11 @@ namespace BankingApp.Menus
 
                         if (!hasChecking && !hasSaving)
                         {
-                            Console.WriteLine("This customer has no active accounts to delete.");
+                            Console.WriteLine("\n**** This customer has no active accounts to delete. ****");
                             break;
                         }
 
-                        Console.WriteLine("Which account(s) would you like to close?");
+                        Console.WriteLine("\nWhich account(s) would you like to close?");
 
                         var validOptions = new List<int>();
 
@@ -219,13 +285,13 @@ namespace BankingApp.Menus
                             validOptions.Add(1);
                         }
 
-                        Console.Write("Write a number to choose one of the options: ");
+                        Console.Write("\nWrite a number to choose one of the options: ");
 
                         var (validDeleteSelection, deleteSelection) = InputHelper.GetMenuSelection(validOptions.ToArray());
 
                         if (!validDeleteSelection)
                         {
-                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            Console.WriteLine("\n**** Too many invalid attempts. Returning to admin menu. ****");
                             break;
                         }
 
@@ -234,24 +300,24 @@ namespace BankingApp.Menus
                             if (deleteSelection == 1)
                             {
                                 adminService.CloseSavingAccount(customerToDelete.Id);
-                                Console.WriteLine("Saving account closed.");
+                                Console.WriteLine("\n**** Saving account closed. ****");
                             }
                             else
                             {
                                 adminService.CloseCheckingAccount(customerToDelete.Id);
                                 adminService.CloseSavingAccount(customerToDelete.Id);
-                                Console.WriteLine("Checking and saving accounts closed.");
+                                Console.WriteLine("\n**** Checking and saving accounts closed. ****");
                             }
                         }
                         else if (hasChecking)
                         {
                             adminService.CloseCheckingAccount(customerToDelete.Id);
-                            Console.WriteLine("Checking account closed.");
+                            Console.WriteLine("\n**** Checking account closed. ****");
                         }
                         else
                         {
                             adminService.CloseSavingAccount(customerToDelete.Id);
-                            Console.WriteLine("Saving account closed.");
+                            Console.WriteLine("\n**** Saving account closed. ****");
                         }
 
                         break;
@@ -261,7 +327,7 @@ namespace BankingApp.Menus
 
                         while (editCredentialAttempts < 3)
                         {
-                            Console.Write("Enter customer's username: ");
+                            Console.Write("\nEnter customer's username: ");
                             string? editUsername = Console.ReadLine();
 
                             Console.Write("Enter customer's password: ");
@@ -271,11 +337,11 @@ namespace BankingApp.Menus
 
                             if (!found)
                             {
-                                Console.WriteLine("No customer found with that username.");
+                                Console.WriteLine("\n**** No customer found with that username. ****");
                             }
                             else if (!passwordValid)
                             {
-                                Console.WriteLine("Incorrect password.");
+                                Console.WriteLine("\n**** Incorrect password. ****");
                             }
                             else
                             {
@@ -288,11 +354,11 @@ namespace BankingApp.Menus
 
                         if (customerToEdit == null)
                         {
-                            Console.WriteLine("Too many failed attempts. Returning to admin menu.");
+                            Console.WriteLine("\n**** Too many failed attempts. Returning to admin menu. ****");
                             break;
                         }
 
-                        Console.WriteLine("What would you like to update?");
+                        Console.WriteLine("\nWhat would you like to update?");
                         Console.WriteLine("1. Name");
                         Console.WriteLine("2. Phone Number");
                         Console.WriteLine("3. Email");
@@ -302,7 +368,7 @@ namespace BankingApp.Menus
 
                         if (!validFieldSelection)
                         {
-                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            Console.WriteLine("\n**** Too many invalid attempts. Returning to admin menu. ****");
                             break;
                         }
 
@@ -313,7 +379,7 @@ namespace BankingApp.Menus
                         {
                             if (fieldSelection == 1)
                             {
-                                Console.Write("Enter updated name: ");
+                                Console.Write("\nEnter updated name: ");
                                 string? updatedName = Console.ReadLine();
                                 editResult = customerService.UpdateCustomerName(customerToEdit.Id, updatedName!);
                             }
@@ -335,11 +401,11 @@ namespace BankingApp.Menus
 
                             Console.WriteLine(editResult switch
                             {
-                                UpdateCustomerResult.InvalidInput => "Invalid input. Please try again.",
-                                UpdateCustomerResult.DuplicateEmail => "That email is already in use. Please try again.",
-                                UpdateCustomerResult.DuplicatePhoneNumber => "That phone number is already in use. Please try again.",
-                                UpdateCustomerResult.CustomerNotFound => "Customer not found.",
-                                _ => "Unknown error."
+                                UpdateCustomerResult.InvalidInput => "\n**** Invalid input. Please try again. ****",
+                                UpdateCustomerResult.DuplicateEmail => "\n**** That email is already in use. Please try again. ****",
+                                UpdateCustomerResult.DuplicatePhoneNumber => "\n**** That phone number is already in use. Please try again. ****",
+                                UpdateCustomerResult.CustomerNotFound => "\n**** Customer not found. ****",
+                                _ => "\n**** Unknown error. ****"
                             });
 
                             editAttempts++;
@@ -347,11 +413,11 @@ namespace BankingApp.Menus
 
                         if (editResult == UpdateCustomerResult.Success)
                         {
-                            Console.WriteLine("Customer info updated successfully.");
+                            Console.WriteLine("\nCustomer info updated successfully.");
                         }
                         else
                         {
-                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            Console.WriteLine("\n**** Too many invalid attempts. Returning to admin menu. ****");
                         }
 
                         break;
@@ -364,20 +430,20 @@ namespace BankingApp.Menus
 
                         while (passResetAttempts < 3)
                         {
-                            Console.Write("Enter customer's username: ");
+                            Console.Write("\nEnter customer's username: ");
                             string? getCustUsername = Console.ReadLine();
 
                             var (verified, foundCustomer) = customerService.VerifyUsername(getCustUsername!);
 
                             if (verified)
                             {
-                                Console.WriteLine("Customer Found!");
+                                Console.WriteLine("\nCustomer Found!");
                                 custToUpdatePass = foundCustomer;
                                 break;
                             }
                             else
                             {
-                                Console.WriteLine("No Customer Found");
+                                Console.WriteLine("\n**** No Customer Found ****");
                             }
 
                             passResetAttempts++;
@@ -385,7 +451,7 @@ namespace BankingApp.Menus
 
                         if (custToUpdatePass == null)
                         {
-                            Console.WriteLine("Too many failed attempts. Returning to admin menu.");
+                            Console.WriteLine("\n**** Too many failed attempts. Returning to admin menu. ****");
                             break;
                         }
 
@@ -394,12 +460,12 @@ namespace BankingApp.Menus
 
                         while (newPasswordAttempts < 3)
                         {
-                            Console.Write("Enter customer's updated password: ");
+                            Console.Write("\nEnter customer's updated password: ");
                             string? enteredPassword = Console.ReadLine();
 
                             if (string.IsNullOrWhiteSpace(enteredPassword))
                             {
-                                Console.WriteLine("Password cannot be empty. Please try again.");
+                                Console.WriteLine("\n**** Password cannot be empty. Please try again. ****");
                                 newPasswordAttempts++;
                                 continue;
                             }
@@ -410,14 +476,64 @@ namespace BankingApp.Menus
 
                         if (updatedCustPass == null)
                         {
-                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            Console.WriteLine("\n**** Too many invalid attempts. Returning to admin menu. ****");
                             break;
                         }
 
                         customerService.ChangeCustomerPass(custToUpdatePass, updatedCustPass);
-                        Console.WriteLine("Customer's password updated successfully");
+                        Console.WriteLine("\nCustomer's password updated successfully");
                         break;
                     case 6:
+                        var pendingRequests = adminService.GetPendingChequeBookRequests();
+
+                        if (pendingRequests.Count == 0)
+                        {
+                            Console.WriteLine("No pending cheque book requests.");
+                            break;
+                        }
+
+                        Console.WriteLine("\n===== Pending Cheque Book Requests =====");
+                        for (int i = 0; i < pendingRequests.Count; i++)
+                        {
+                            var request = pendingRequests[i];
+                            Console.WriteLine($"{i + 1}. {request.Customer.Name} - Account #: {request.CheckingAccount.AccountNumber} - Requested: {request.RequestDate}");
+                        }
+                        Console.WriteLine("=========================================");
+                        Console.Write("Select a request number: ");
+
+                        var requestOptions = Enumerable.Range(1, pendingRequests.Count).ToArray();
+                        var (validRequestSelection, requestSelection) = InputHelper.GetMenuSelection(requestOptions);
+
+                        if (!validRequestSelection)
+                        {
+                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            break;
+                        }
+
+                        var chosenRequest = pendingRequests[requestSelection - 1];
+
+                        Console.WriteLine($"\n1. Approve\n2. Deny");
+                        Console.Write("Write a number to choose one of the options: ");
+
+                        var (validDecision, decision) = InputHelper.GetMenuSelection(new[] { 1, 2 });
+
+                        if (!validDecision)
+                        {
+                            Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                            break;
+                        }
+
+                        if (decision == 1)
+                        {
+                            adminService.ApproveChequeBookRequest(chosenRequest.Id, loggedInAdmin.Id);
+                            Console.WriteLine("Request approved.");
+                        }
+                        else
+                        {
+                            adminService.DenyChequeBookRequest(chosenRequest.Id, loggedInAdmin.Id);
+                            Console.WriteLine("Request denied.");
+                        }
+
                         break;
                     case 7:
                         Messages.AdminGoodbye();
