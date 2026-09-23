@@ -2,6 +2,7 @@ using BankingApp.Utils;
 using BankingApp.Data.Services;
 using BankingApp.Data.Models;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace BankingApp.Menus
 {
@@ -9,33 +10,155 @@ namespace BankingApp.Menus
     {
         private static void CreateNewCustomerFlow(CustomerService customerService, AdminService adminService, bool includeSaving)
         {
-            Console.Write("Create a username: ");
-            string? newUsername = Console.ReadLine();
+            string? newUsername = null;
+            int usernameAttempts = 0;
 
-            Console.Write("Create a password: ");
-            string? newPassword = Console.ReadLine();
+            while (usernameAttempts < 3)
+            {
+                Console.Write("Create a username: ");
+                string? entered = Console.ReadLine();
 
-            Console.Write("Enter customer's full name: ");
-            string? newName = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(entered))
+                {
+                    Console.WriteLine("Username cannot be empty.");
+                }
+                else if (customerService.UsernameExists(entered))
+                {
+                    Console.WriteLine("That username is already taken.");
+                }
+                else
+                {
+                    newUsername = entered;
+                    break;
+                }
 
-            Console.Write("Enter customer's phone number: ");
-            string? newPhoneNumber = Console.ReadLine();
+                usernameAttempts++;
+            }
 
-            Console.Write("Enter customer's email: ");
-            string? newEmail = Console.ReadLine();
+            if (newUsername == null)
+            {
+                Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                return;
+            }
+
+            string? newPassword = null;
+            int passwordAttempts = 0;
+
+            while (passwordAttempts < 3)
+            {
+                Console.Write("Create a password: ");
+                string? entered = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(entered))
+                {
+                    Console.WriteLine("Password cannot be empty.");
+                    passwordAttempts++;
+                    continue;
+                }
+
+                newPassword = entered;
+                break;
+            }
+
+            if (newPassword == null)
+            {
+                Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                return;
+            }
+
+            string? newName = null;
+            int nameAttempts = 0;
+
+            while (nameAttempts < 3)
+            {
+                Console.Write("Enter customer's full name: ");
+                string? entered = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(entered))
+                {
+                    Console.WriteLine("Name cannot be empty.");
+                    nameAttempts++;
+                    continue;
+                }
+
+                newName = entered;
+                break;
+            }
+
+            if (newName == null)
+            {
+                Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                return;
+            }
+
+            string? newPhoneNumber = null;
+            int phoneAttempts = 0;
+
+            while (phoneAttempts < 3)
+            {
+                Console.Write("Enter customer's phone number: ");
+                string? entered = Console.ReadLine();
+                string digitsOnly = entered == null ? "" : Regex.Replace(entered, @"[^\d]", "");
+
+                if (digitsOnly.Length != 10)
+                {
+                    Console.WriteLine("Phone number must be exactly 10 digits.");
+                }
+                else if (customerService.PhoneNumberExists(digitsOnly))
+                {
+                    Console.WriteLine("That phone number is already in use.");
+                }
+                else
+                {
+                    newPhoneNumber = digitsOnly;
+                    break;
+                }
+
+                phoneAttempts++;
+            }
+
+            if (newPhoneNumber == null)
+            {
+                Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                return;
+            }
+
+            string? newEmail = null;
+            int emailAttempts = 0;
+
+            while (emailAttempts < 3)
+            {
+                Console.Write("Enter customer's email: ");
+                string? entered = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(entered) || !entered.Contains('@'))
+                {
+                    Console.WriteLine("Please enter a valid email address.");
+                }
+                else if (customerService.EmailExists(entered))
+                {
+                    Console.WriteLine("That email is already in use.");
+                }
+                else
+                {
+                    newEmail = entered;
+                    break;
+                }
+
+                emailAttempts++;
+            }
+
+            if (newEmail == null)
+            {
+                Console.WriteLine("Too many invalid attempts. Returning to admin menu.");
+                return;
+            }
 
             var (result, customer) = customerService.CreateCustomer(newUsername, newPassword, newName, newPhoneNumber, newEmail);
 
             if (result != CreateCustomerResult.Success)
             {
-                Console.WriteLine(result switch
-                {
-                    CreateCustomerResult.InvalidInput => "Invalid input. Please check all fields.",
-                    CreateCustomerResult.DuplicateUsername => "That username is already taken.",
-                    CreateCustomerResult.DuplicateEmail => "That email is already in use.",
-                    CreateCustomerResult.DuplicatePhoneNumber => "That phone number is already in use.",
-                    _ => "Unknown error."
-                });
+                Console.WriteLine("Something went wrong creating the customer. Returning to admin menu.");
                 return;
             }
 

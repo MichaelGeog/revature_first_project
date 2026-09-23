@@ -71,6 +71,10 @@ namespace BankingApp.Data.Services
     {
         private readonly ProjectBankingAppContext _dbContext;
 
+        public bool UsernameExists(string username) => _dbContext.Customers.Any(c => c.Username == username);
+        public bool EmailExists(string email) => _dbContext.Customers.Any(c => c.Email == email);
+        public bool PhoneNumberExists(string digitsOnlyPhone) => _dbContext.Customers.Any(c => c.PhoneNumber == digitsOnlyPhone);
+
         public CustomerService(ProjectBankingAppContext dbContext)
         {
             _dbContext = dbContext;
