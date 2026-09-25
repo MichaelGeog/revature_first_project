@@ -36,5 +36,41 @@ namespace BankingApp.Utils
             return (false, 0);
         }
 
+        public static void WaitForEscToContinue()
+        {
+            Console.WriteLine("\nPress ESC to return to the menu...");
+
+            while (Console.ReadKey(intercept: true).Key != ConsoleKey.Escape)
+            {
+            }
+
+            Console.Clear();
+        }
+    
+        public static string ReadPassword()
+        {
+            var password = new System.Text.StringBuilder();
+            ConsoleKeyInfo key;
+
+            do
+            {
+                key = Console.ReadKey(intercept: true);
+
+                if (key.Key == ConsoleKey.Backspace && password.Length > 0)
+                {
+                    password.Remove(password.Length - 1, 1);
+                    Console.Write("\b \b");
+                }
+                else if (!char.IsControl(key.KeyChar))
+                {
+                    password.Append(key.KeyChar);
+                    Console.Write("*");
+                }
+            }
+            while (key.Key != ConsoleKey.Enter);
+
+            Console.WriteLine();
+            return password.ToString();
+        }
     }
 }

@@ -37,14 +37,16 @@ namespace BankingApp.Menus
             int attempts = 0;
             Customer? loggedInCustomer = null;
 
-            while (attempts < 3) 
+            Console.Clear();
+
+            while (attempts < 3)
             {
                 Console.Write("\nEnter Your Username: \n");
                 string? custUsername = Console.ReadLine();
                 Console.Write("Enter Your Password: \n");
-                string? custPassword = Console.ReadLine();
+                string custPassword = InputHelper.ReadPassword();
 
-                var (found, passwordValid, customer) = customerService.VerifyCredentials(custUsername!, custPassword!);
+                var (found, passwordValid, customer) = customerService.VerifyCredentials(custUsername!, custPassword);
 
                 if (!found)
                 {
@@ -67,6 +69,7 @@ namespace BankingApp.Menus
             if (loggedInCustomer == null)
             {
                 Console.WriteLine("\n**** Too many failed attempts. Returning to main menu. ****");
+                InputHelper.WaitForEscToContinue();
                 return;
             }
 
@@ -74,6 +77,7 @@ namespace BankingApp.Menus
 
             while (!exit2)
             {
+                Console.Clear();
                 Console.WriteLine("\n---------------------------------------------");
                 Console.WriteLine($"Welcome {loggedInCustomer.Name}!, How can we help you today?");
                 Console.WriteLine("---------------------------------------------");
@@ -96,10 +100,12 @@ namespace BankingApp.Menus
                 switch (userSelection2)
                 {
                     case 1:
+                        Console.Clear();
                         var (hasChecking, hasSaving) = customerService.GetActiveAccountsStatus(loggedInCustomer.Id);
 
                         if (hasChecking && !hasSaving)
                         {
+                            Console.Clear();
                             var checkingAccount = customerService.GetActiveCheckingAccount(loggedInCustomer.Id);
                             PrintCheckingAccount(checkingAccount!);
                         }
@@ -115,16 +121,19 @@ namespace BankingApp.Menus
                             if (!validSelection)
                             {
                                 Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                                InputHelper.WaitForEscToContinue();
                                 break;
                             }
 
                             if (accountSelection == 1)
                             {
+                                Console.Clear();
                                 var checkingAccount = customerService.GetActiveCheckingAccount(loggedInCustomer.Id);
                                 PrintCheckingAccount(checkingAccount!);
                             }
                             else
                             {
+                                Console.Clear();
                                 var savingAccount = customerService.GetActiveSavingAccount(loggedInCustomer.Id);
                                 PrintSavingAccount(savingAccount!);
                             }
@@ -133,8 +142,10 @@ namespace BankingApp.Menus
                         {
                             Console.WriteLine("\nNo active accounts found.");
                         }
+                        InputHelper.WaitForEscToContinue();
                         break;
                     case 2:
+                        Console.Clear();
                         int withdrawAttempts = 0;
                         decimal withdrawAmount = 0;
                         bool validWithdrawAmount = false;
@@ -157,6 +168,7 @@ namespace BankingApp.Menus
                         if (!validWithdrawAmount)
                         {
                             Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                            InputHelper.WaitForEscToContinue();
                             break;
                         }
 
@@ -170,18 +182,20 @@ namespace BankingApp.Menus
                             WithdrawResult.InvalidAmount => "\n**** Invalid withdrawal amount. ****",
                             _ => "\n**** Unknown error. ****"
                         });
-
+                        InputHelper.WaitForEscToContinue();
                         break;
                     case 3:
+                        Console.Clear();
                         var (hasCheckingForDeposit, hasSavingForDeposit) = customerService.GetActiveAccountsStatus(loggedInCustomer.Id);
 
                         if (!hasCheckingForDeposit && !hasSavingForDeposit)
                         {
                             Console.WriteLine("\n**** No active accounts found. ****");
+                            InputHelper.WaitForEscToContinue();
                             break;
                         }
 
-                        int depositAccountSelection = 1; // default to checking when there's only one option
+                        int depositAccountSelection = 1; 
 
                         if (hasCheckingForDeposit && hasSavingForDeposit)
                         {
@@ -195,6 +209,7 @@ namespace BankingApp.Menus
                             if (!validDepositSelection)
                             {
                                 Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                                InputHelper.WaitForEscToContinue();
                                 break;
                             }
 
@@ -205,6 +220,7 @@ namespace BankingApp.Menus
                         decimal depositAmount = 0;
                         bool validDepositAmount = false;
 
+                        Console.Clear();
                         while (depositAttempts < 3)
                         {
                             Console.Write("\nHow much would you like to deposit: ");
@@ -223,6 +239,7 @@ namespace BankingApp.Menus
                         if (!validDepositAmount)
                         {
                             Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                            InputHelper.WaitForEscToContinue();
                             break;
                         }
 
@@ -240,14 +257,16 @@ namespace BankingApp.Menus
                             DepositResult.InvalidAmount => "\n**** Invalid deposit amount. ****",
                             _ => "\n**** Unknown error. ****"
                         });
-
+                        InputHelper.WaitForEscToContinue();
                         break;
                     case 4:
+                        Console.Clear();
                         var (hasCheckingForTransfer, hasSavingForTransfer) = customerService.GetActiveAccountsStatus(loggedInCustomer.Id);
 
                         if (!hasCheckingForTransfer)
                         {
                             Console.WriteLine("\n**** No active checking account found. ****");
+                            InputHelper.WaitForEscToContinue();
                             break;
                         }
 
@@ -264,6 +283,7 @@ namespace BankingApp.Menus
                             if (!validTransferTypeSelection)
                             {
                                 Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                                InputHelper.WaitForEscToContinue();
                                 break;
                             }
 
@@ -276,6 +296,7 @@ namespace BankingApp.Menus
 
                         if (!transferToSomeone)
                         {
+                            Console.Clear();
                             Console.WriteLine("\n1. Checking to Saving");
                             Console.WriteLine("2. Saving to Checking");
                             Console.Write("Write a number to choose one of the options: ");
@@ -285,6 +306,7 @@ namespace BankingApp.Menus
                             if (!validDirectionSelection)
                             {
                                 Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                                InputHelper.WaitForEscToContinue();
                                 break;
                             }
 
@@ -292,6 +314,7 @@ namespace BankingApp.Menus
                             decimal betweenAmount = 0;
                             bool validBetweenAmount = false;
 
+                            Console.Clear();
                             while (betweenAttempts < 3)
                             {
                                 Console.Write("\nHow much would you like to transfer: ");
@@ -310,6 +333,7 @@ namespace BankingApp.Menus
                             if (!validBetweenAmount)
                             {
                                 Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                                InputHelper.WaitForEscToContinue();
                                 break;
                             }
 
@@ -317,7 +341,7 @@ namespace BankingApp.Menus
 
                             Console.WriteLine(betweenResult.Result switch
                             {
-                                TransferResult.Success => $"\nransfer successful. Checking balance: {betweenResult.CheckingBalance:C}, Saving balance: {betweenResult.SavingBalance:C}",
+                                TransferResult.Success => $"\nTransfer successful. Checking balance: {betweenResult.CheckingBalance:C}, Saving balance: {betweenResult.SavingBalance:C}",
                                 TransferResult.InvalidAmount => "\n**** Invalid transfer amount. ****",
                                 TransferResult.NoActiveAccount => "\n**** One or more accounts are not active. ****",
                                 TransferResult.InsufficientFunds => "\n**** Insufficient funds for this transfer. ****",
@@ -329,7 +353,7 @@ namespace BankingApp.Menus
                             int phoneAttempts = 0;
                             string? recipientPhone = null;
                             bool validRecipientPhone = false;
-
+                            Console.Clear();
                             while (phoneAttempts < 3)
                             {
                                 Console.Write("\nEnter recipient's phone number: ");
@@ -352,13 +376,14 @@ namespace BankingApp.Menus
                             if (!validRecipientPhone)
                             {
                                 Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                                InputHelper.WaitForEscToContinue();
                                 break;
                             }
 
                             int someoneAttempts = 0;
                             decimal someoneAmount = 0;
                             bool validSomeoneAmount = false;
-
+                            Console.Clear();
                             while (someoneAttempts < 3)
                             {
                                 Console.Write("\nHow much would you like to transfer: ");
@@ -377,6 +402,7 @@ namespace BankingApp.Menus
                             if (!validSomeoneAmount)
                             {
                                 Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                                InputHelper.WaitForEscToContinue();
                                 break;
                             }
 
@@ -393,14 +419,16 @@ namespace BankingApp.Menus
                                 _ => "\n**** Unknown error. ****"
                             });
                         }
-
+                        InputHelper.WaitForEscToContinue();
                         break;
                     case 5:
+                        Console.Clear();
                         var recentTransactions = customerService.GetLastTransactions(loggedInCustomer.Id);
 
                         if (recentTransactions.Count == 0)
                         {
                             Console.WriteLine("\nNo transactions found.");
+                            InputHelper.WaitForEscToContinue();
                             break;
                         }
 
@@ -413,9 +441,10 @@ namespace BankingApp.Menus
                         }
 
                         Console.WriteLine("================================");
-
+                        InputHelper.WaitForEscToContinue();
                         break;
                     case 6:
+                        Console.Clear();
                         var chequeResult = customerService.RequestChequeBook(loggedInCustomer.Id);
 
                         Console.WriteLine(chequeResult switch
@@ -425,22 +454,23 @@ namespace BankingApp.Menus
                             RequestChequeBookResult.AlreadyPending => "\n**** You already have a pending cheque book request. ****",
                             _ => "\n**** Unknown error. ****"
                         });
-
+                        InputHelper.WaitForEscToContinue();
                         break;
                     case 7:
+                        Console.Clear();
                         int currentPassAttempts = 0;
                         string? verifiedCurrentPassword = null;
 
                         while (currentPassAttempts < 3)
                         {
                             Console.Write("\nEnter your current password: ");
-                            string? enteredCurrentPassword = Console.ReadLine();
+                            string enteredCurrentPassword = InputHelper.ReadPassword();
 
-                            bool isCorrect = BCrypt.Net.BCrypt.Verify(enteredCurrentPassword ?? "", loggedInCustomer.Password);
+                            bool isCorrect = BCrypt.Net.BCrypt.Verify(enteredCurrentPassword, loggedInCustomer.Password);
 
                             if (!isCorrect)
                             {
-                                Console.WriteLine("I\n**** ncorrect password. Please try again. ****");
+                                Console.WriteLine("\n**** Incorrect password. Please try again. ****");
                                 currentPassAttempts++;
                                 continue;
                             }
@@ -452,6 +482,7 @@ namespace BankingApp.Menus
                         if (verifiedCurrentPassword == null)
                         {
                             Console.WriteLine("\n**** Too many failed attempts. Returning to customer menu. ****");
+                            InputHelper.WaitForEscToContinue();
                             break;
                         }
 
@@ -461,7 +492,7 @@ namespace BankingApp.Menus
                         while (newPassAttempts < 3)
                         {
                             Console.Write("\nEnter your new password: ");
-                            string? enteredNewPassword = Console.ReadLine();
+                            string enteredNewPassword = InputHelper.ReadPassword();
 
                             if (string.IsNullOrWhiteSpace(enteredNewPassword))
                             {
@@ -477,6 +508,7 @@ namespace BankingApp.Menus
                         if (newPassword == null)
                         {
                             Console.WriteLine("\n**** Too many invalid attempts. Returning to customer menu. ****");
+                            InputHelper.WaitForEscToContinue();
                             break;
                         }
 
@@ -489,10 +521,11 @@ namespace BankingApp.Menus
                             ChangePasswordResult.InvalidNewPassword => "\n**** New password was invalid. ****",
                             _ => "\n**** Unknown error. ****"
                         });
-
+                        InputHelper.WaitForEscToContinue();
                         break;
                     case 8:
                         Messages.CustomerGoodbye();
+                        InputHelper.WaitForEscToContinue();
                         exit2 = true;
                         break;
                 }

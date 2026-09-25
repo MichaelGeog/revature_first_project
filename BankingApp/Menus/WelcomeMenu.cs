@@ -9,9 +9,10 @@ namespace BankingApp.Menus
         {
             bool exit = false;
 
+            Console.Clear();
             while (!exit)
             {
-                Console.WriteLine("\n=======================");
+                Console.WriteLine("=======================");
                 Console.WriteLine("| Welcome to the bank |");
                 Console.WriteLine("=======================");
                 Console.WriteLine("1. Customer");
